@@ -10,7 +10,7 @@ import base64
 
 # Page configuration
 st.set_page_config(
-    page_title="JWL CALC - Jewelry Estimation",
+    page_title="Jewel Calc - Jewellery Invoicing",
     page_icon="💎",
     layout="centered"
 )
@@ -30,13 +30,42 @@ if 'base_values' not in st.session_state:
 
 # Function to generate PDF for thermal printer
 def generate_thermal_pdf(data):
-    """Generate a PDF formatted for thermal printer (80mm width)"""
+    """Generate a PDF formatted for thermal printer (80mm width) with dynamic height"""
     # Create PDF in temp directory
     pdf_filename = f"/tmp/jewel_estimate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     
     # Thermal printer width is typically 80mm (about 226.77 points)
     width = 80 * mm
-    height = 297 * mm  # A4 height for scrolling
+    
+    # Calculate dynamic height based on content
+    line_height = 4 * mm
+    content_lines = 0
+    
+    # Count lines for customer information
+    content_lines += 5  # Title, date, separator lines
+    if data['bill_number']:
+        content_lines += 1
+    if data['customer_acc']:
+        content_lines += 1
+    if data['customer_name']:
+        content_lines += 1
+    if data['address']:
+        content_lines += 1
+    if data['mobile_number']:
+        content_lines += 1
+    
+    # Item details section (fixed lines)
+    content_lines += 10  # Section headers, item details
+    
+    # Amount calculation section
+    content_lines += 10  # Amount details, GST, total
+    
+    # Add discount line if discount exists
+    if data.get('discount_amount', 0) > 0:
+        content_lines += 1
+    
+    # Calculate height with some padding
+    height = (content_lines * line_height) + (20 * mm)
     
     c = canvas.Canvas(pdf_filename, pagesize=(width, height))
     
@@ -47,7 +76,7 @@ def generate_thermal_pdf(data):
     y = height - 10 * mm
     
     # Title
-    c.drawCentredString(width / 2, y, "JEWELRY ESTIMATE")
+    c.drawCentredString(width / 2, y, "JEWELLERY INVOICE")
     y -= 5 * mm
     
     # Date and time in IST
@@ -129,6 +158,18 @@ def generate_thermal_pdf(data):
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['amount_before_gst']:.2f}")
     y -= 5 * mm
     
+    # Add discount if exists
+    if data.get('discount_amount', 0) > 0:
+        c.setFont("Helvetica", 8)
+        c.drawString(5 * mm, y, f"Discount:")
+        c.drawRightString(width - 5 * mm, y, f"Rs.{data['discount_amount']:.2f}")
+        y -= 4 * mm
+        
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(5 * mm, y, f"After Discount:")
+        c.drawRightString(width - 5 * mm, y, f"Rs.{data['amount_after_discount']:.2f}")
+        y -= 5 * mm
+    
     c.setFont("Helvetica", 8)
     c.drawString(5 * mm, y, f"CGST 1.5%:")
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['cgst_amount']:.2f}")
@@ -203,7 +244,7 @@ with st.sidebar:
         st.rerun()
 
 # Main App
-st.title("💎 JWL CALC - Jewelry Estimation")
+st.title("💎 Jewel Calc - Jewellery Invoicing")
 
 # Display time in IST
 ist = pytz.timezone('Asia/Kolkata')
@@ -314,59 +355,100 @@ with col1:
 with col2:
     st.metric("Amount (₹)", f"{amount_before_gst:.2f}")
 
-# CGST and SGST on separate lines
-cgst_amount = amount_before_gst * 0.015
+# Discount Section
+st.markdown("---")
+st.subheader("Discount")
+discount_type = st.radio(
+    "Discount Type",
+    options=["None", "Rupees (₹)", "Percentage (%)"],
+    horizontal=True
+)
+
+discount_amount = 0.0
+if discount_type == "Rupees (₹)":
+    discount_amount = st.number_input(
+        "Discount Amount (₹)",
+        min_value=0.0,
+        max_value=float(amount_before_gst),
+        value=0.0,
+        step=10.0,
+        format="%.2f"
+    )
+elif discount_type == "Percentage (%)":
+    discount_percentage = st.number_input(
+        "Discount Percentage (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=0.5,
+        format="%.2f"
+    )
+    discount_amount = amount_before_gst * (discount_percentage / 100)
+    st.info(f"Discount Amount: ₹{discount_amount:.2f}")
+
+# Amount after discount
+amount_after_discount = amount_before_gst - discount_amount
+
+if discount_amount > 0:
+    st.metric("Amount After Discount (₹)", f"{amount_after_discount:.2f}")
+
+# CGST and SGST on amount after discount
+st.markdown("---")
+cgst_amount = amount_after_discount * 0.015
 st.metric("CGST 1.5% (₹)", f"{cgst_amount:.2f}")
 
-sgst_amount = amount_before_gst * 0.015
+sgst_amount = amount_after_discount * 0.015
 st.metric("SGST 1.5% (₹)", f"{sgst_amount:.2f}")
 
 # Final Amount
-final_amount = amount_before_gst + cgst_amount + sgst_amount
+final_amount = amount_after_discount + cgst_amount + sgst_amount
 
 st.markdown("---")
 st.success(f"### 💰 Amount Incl. GST: ₹{final_amount:.2f}")
 
-# Save Button Only
+# Download PDF Button
 st.markdown("---")
-if st.button("💾 Save & Generate PDF", type="primary", use_container_width=True):
-    # Collect all data
-    estimate_data = {
-        'bill_number': bill_number,
-        'customer_acc': customer_acc,
-        'customer_name': customer_name,
-        'address': address,
-        'mobile_number': mobile_number,
-        'selected_type': selected_type,
-        'rate_per_gram': rate_per_gram,
-        'weight_gm': weight_gm,
-        'wastage_gm': wastage_gm,
-        'net_weight_gm': net_weight_gm,
-        'j_amount': j_amount,
-        'making_charges': making_charges,
-        'amount_before_gst': amount_before_gst,
-        'cgst_amount': cgst_amount,
-        'sgst_amount': sgst_amount,
-        'final_amount': final_amount
-    }
-    
-    # Generate PDF
-    pdf_file = generate_thermal_pdf(estimate_data)
-    
-    # Read PDF file
-    with open(pdf_file, "rb") as f:
-        pdf_data = f.read()
-    
-    # Create download button
-    st.success("✅ PDF generated successfully!")
-    st.download_button(
-        label="📥 Download PDF (for thermal printer)",
-        data=pdf_data,
-        file_name=f"jewel_estimate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-        mime="application/pdf"
-    )
-    st.info("💡 After downloading, you can open the PDF and print it to your thermal printer.")
+
+# Collect all data
+estimate_data = {
+    'bill_number': bill_number,
+    'customer_acc': customer_acc,
+    'customer_name': customer_name,
+    'address': address,
+    'mobile_number': mobile_number,
+    'selected_type': selected_type,
+    'rate_per_gram': rate_per_gram,
+    'weight_gm': weight_gm,
+    'wastage_gm': wastage_gm,
+    'net_weight_gm': net_weight_gm,
+    'j_amount': j_amount,
+    'making_charges': making_charges,
+    'amount_before_gst': amount_before_gst,
+    'discount_amount': discount_amount,
+    'amount_after_discount': amount_after_discount,
+    'cgst_amount': cgst_amount,
+    'sgst_amount': sgst_amount,
+    'final_amount': final_amount
+}
+
+# Generate PDF
+pdf_file = generate_thermal_pdf(estimate_data)
+
+# Read PDF file
+with open(pdf_file, "rb") as f:
+    pdf_data = f.read()
+
+# Display download button directly
+st.download_button(
+    label="📄 Download PDF",
+    data=pdf_data,
+    file_name=f"jewel_invoice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+    mime="application/pdf",
+    type="primary",
+    use_container_width=True
+)
+st.info("💡 Click the button above to download the PDF. You can then open it in a new tab and print it to your thermal printer.")
 
 # Footer
 st.markdown("---")
-st.caption("💎 JWL CALC - Professional Jewelry Estimation System | Made with Streamlit")
+st.caption("💎 Jewel Calc - Professional Jewellery Invoicing System | Made with Streamlit")
