@@ -1,16 +1,15 @@
-# 💎 SimpleJewel - Jewelry Estimation Calculator
+# 💎 Jewel Calc - Jewellery Invoicing Application
 
-A simple and intuitive jewelry estimation calculator built with Streamlit. Calculate gold and silver jewelry prices with automatic GST calculations, making charges, and detailed breakdowns.
-
-![SimpleJewel App](https://github.com/user-attachments/assets/fb9a768b-dcf3-4b90-a174-fcbff1a3c013)
+A simple and intuitive jewellery invoicing application built with Streamlit. Calculate gold and silver jewellery prices with automatic GST calculations, making charges, discount options, and detailed breakdowns.
 
 ## 🌟 Features
 
 - **Multiple Gold Types Support**: Calculate for Gold 22K/916, 20K/833, 18K/750, and Silver
-- **Real-time Calculations**: Automatic calculation of jewelry amounts, making charges, and GST
+- **Real-time Calculations**: Automatic calculation of jewellery amounts, making charges, and GST
+- **Discount Options**: Apply discounts in rupees or percentage
 - **Configurable Base Values**: Easily adjust gold/silver rates and making charges
 - **Customer Information**: Capture bill number, customer details, and contact information
-- **Detailed Breakdown**: View comprehensive calculation summaries with visual charts
+- **PDF Invoice Generation**: Dynamic-sized PDF invoices optimized for thermal printers
 - **Clean Interface**: Simple, user-friendly design focused on essential features
 
 ## 📋 Prerequisites
@@ -51,8 +50,6 @@ The application will open in your default web browser at `http://localhost:8501`
 4. **Value Addition**: Set value addition percentage for gold
 5. **Reset**: Use "Reset to Defaults" button to restore default values
 
-![Configuration](https://github.com/user-attachments/assets/fb9a768b-dcf3-4b90-a174-fcbff1a3c013)
-
 ### Create an Estimate
 
 #### Step 1: Enter Customer Information
@@ -68,21 +65,17 @@ The application will open in your default web browser at `http://localhost:8501`
 3. **Enter Wastage**: Add wastage amount in grams
 4. **Review Net Weight**: Automatically calculated (Weight + Wastage)
 
-![Item Calculation](https://github.com/user-attachments/assets/22137f80-e9f0-48a1-aa54-6193246ca496)
-
 #### Step 3: Review Amounts
-- **J Amount**: Jewelry base amount (Net Weight × Rate)
+- **J Amount**: Jewellery base amount (Net Weight × Rate)
 - **Making Charges**: Calculated automatically (can be adjusted manually)
-- **CGST/SGST**: 1.5% each on subtotal
+- **Discount**: Apply discount in rupees or percentage
+- **CGST/SGST**: 1.5% each on amount after discount
 - **Final Amount**: Total amount including GST
 
-#### Step 4: View Calculation Summary
-Switch to the "Calculations Summary" tab to see:
-- Complete breakdown of all calculations
-- Visual chart showing amount distribution
-- Detailed line-by-line summary
-
-![Calculations Summary](https://github.com/user-attachments/assets/4f86597b-058e-45d0-b532-e20968250892)
+#### Step 4: Download Invoice
+- Click "Download PDF" button to generate invoice
+- PDF opens in new tab optimized for thermal printer
+- Print directly to thermal printer from browser
 
 ## 🎯 Calculation Formula
 
@@ -90,9 +83,10 @@ Switch to the "Calculations Summary" tab to see:
 Net Weight = Gross Weight + Wastage
 J Amount = Net Weight × Rate per gram
 Subtotal = J Amount + Making Charges
-CGST = Subtotal × 1.5%
-SGST = Subtotal × 1.5%
-Total Amount = Subtotal + CGST + SGST
+Amount After Discount = Subtotal - Discount
+CGST = Amount After Discount × 1.5%
+SGST = Amount After Discount × 1.5%
+Total Amount = Amount After Discount + CGST + SGST
 ```
 
 ## 🛠️ Recommendations for Keeping the App Simple
@@ -108,11 +102,10 @@ The application is intentionally designed to be simple and focused. Here are rec
 
 ### Future Enhancements (Keep Simple) 💡
 If adding features, consider these simple additions:
-1. **PDF Export**: Add simple PDF download of the estimate (replace Print button)
-2. **CSV History**: Save estimates to a CSV file for record-keeping (replace Save button)
-3. **Currency Symbol**: Make ₹ symbol configurable for other currencies
-4. **Dark Mode**: Simple toggle for dark/light theme
-5. **Multiple Items**: Allow adding 2-3 items per estimate with simple "Add Item" button
+1. **CSV History**: Save invoices to a CSV file for record-keeping
+2. **Currency Symbol**: Make ₹ symbol configurable for other currencies
+3. **Dark Mode**: Simple toggle for dark/light theme
+4. **Multiple Items**: Allow adding 2-3 items per invoice with simple "Add Item" button
 
 ### Avoid These Complexities ⚠️
 To keep the app simple, avoid:
