@@ -10,7 +10,7 @@ import base64
 
 # Page configuration
 st.set_page_config(
-    page_title="Jewel Calc - Jewellery Invoicing",
+    page_title="Jewel Calc",
     page_icon="💎",
     layout="centered"
 )
@@ -244,7 +244,7 @@ with st.sidebar:
         st.rerun()
 
 # Main App
-st.title("💎 Jewel Calc - Jewellery Invoicing")
+st.title("💎 Jewel Calc 💎")
 
 # Display time in IST
 ist = pytz.timezone('Asia/Kolkata')
@@ -447,7 +447,7 @@ st.download_button(
     type="primary",
     use_container_width=True
 )
-st.info("💡 Click the button above to download the PDF. You can then open it in a new tab and print it to your thermal printer.")
+#st.info("💡 Click the button above to download the PDF. You can then open it in a new tab and print it to your thermal printer.")
 
 # Footer
 st.markdown("---")
