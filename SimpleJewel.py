@@ -7,6 +7,48 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 import os
 import base64
+import requests
+from bs4 import BeautifulSoup
+
+# Function to fetch gold rates from website
+def fetch_gold_rates():
+    """Fetch gold rates from thejewellersassociation.org"""
+    try:
+        url = "https://thejewellersassociation.org/"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        rates = {}
+        
+        # Try to find gold rates - this is a generic approach, might need adjustment based on actual website structure
+        # Look for text patterns like "22K", "18K", "Silver" followed by numbers
+        text = soup.get_text()
+        
+        # Try to extract rates using common patterns
+        import re
+        
+        # Look for "1 Gm Gold 22Kt" or similar patterns
+        gold_22_match = re.search(r'(?:1\s*Gm\s*Gold\s*22\s*[Kk]t?|22\s*[Kk]t?\s*Gold).*?(\d+)', text, re.IGNORECASE)
+        gold_18_match = re.search(r'(?:1\s*Gm\s*Gold\s*18\s*[Kk]t?|18\s*[Kk]t?\s*Gold).*?(\d+)', text, re.IGNORECASE)
+        silver_match = re.search(r'(?:1\s*Gm\s*Silver|Silver).*?(\d+)', text, re.IGNORECASE)
+        
+        if gold_22_match:
+            rates['Gold 22K/916'] = int(gold_22_match.group(1))
+        if gold_18_match:
+            rates['Gold 18K/750'] = int(gold_18_match.group(1))
+        if silver_match:
+            rates['Silver'] = int(silver_match.group(1))
+        
+        return rates if rates else None
+        
+    except Exception as e:
+        st.error(f"Error fetching gold rates: {str(e)}")
+        return None
 
 # Page configuration
 st.set_page_config(
@@ -20,13 +62,16 @@ if 'base_values' not in st.session_state:
     st.session_state.base_values = {
         'metal_rates': {
             'Gold 22K/916': 5500,
-            'Gold 20K/833': 5044,
             'Gold 18K/750': 4564,
             'Silver': 400
         },
-        'value_addition_gold': 13,
+        'wastage_percentage': 13,
         'metal_mc_per_gm': 80
     }
+
+# Initialize customer details expand state
+if 'customer_details_expanded' not in st.session_state:
+    st.session_state.customer_details_expanded = False
 
 # Function to generate PDF for thermal printer
 def generate_thermal_pdf(data):
@@ -202,6 +247,21 @@ with st.sidebar:
 
     st.subheader("Metal Rates (₹ per gram)")
     
+    # Button to fetch rates from website
+    if st.button("🔄 Fetch Rates from Website", help="Fetch latest rates from thejewellersassociation.org"):
+        with st.spinner("Fetching rates..."):
+            fetched_rates = fetch_gold_rates()
+            if fetched_rates:
+                for metal_type, rate in fetched_rates.items():
+                    if metal_type in st.session_state.base_values['metal_rates']:
+                        st.session_state.base_values['metal_rates'][metal_type] = rate
+                st.success("Rates updated successfully!")
+                st.rerun()
+            else:
+                st.warning("Could not fetch rates from website. Please update manually.")
+    
+    st.markdown("---")
+    
     # Update metal rates
     for metal_type in st.session_state.base_values['metal_rates'].keys():
         st.session_state.base_values['metal_rates'][metal_type] = st.number_input(
@@ -214,11 +274,11 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("Other Settings")
 
-    st.session_state.base_values['value_addition_gold'] = st.number_input(
-        "Value Addition Gold's (%)", 
+    st.session_state.base_values['wastage_percentage'] = st.number_input(
+        "Wastage (%)", 
         min_value=0.0, 
         max_value=100.0,
-        value=float(st.session_state.base_values['value_addition_gold']),
+        value=float(st.session_state.base_values['wastage_percentage']),
         step=0.5
     )
 
@@ -234,11 +294,10 @@ with st.sidebar:
         st.session_state.base_values = {
             'metal_rates': {
                 'Gold 22K/916': 5500,
-                'Gold 20K/833': 5044,
                 'Gold 18K/750': 4564,
                 'Silver': 400
             },
-            'value_addition_gold': 13,
+            'wastage_percentage': 13,
             'metal_mc_per_gm': 80
         }
         st.rerun()
@@ -250,18 +309,20 @@ st.title("💎 Jewel Calc 💎")
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
 st.caption(f"📅 {current_time.strftime('%d/%m/%Y %H:%M:%S IST')}")
-# Customer Information Section
-st.header("Customer Information")
-col1, col2 = st.columns(2)
 
-with col1:
-    bill_number = st.text_input("Bill Number", placeholder="Enter bill number")
-    customer_acc = st.text_input("Customer Acc Number", placeholder="Enter account number")
-    customer_name = st.text_input("Name", placeholder="Enter customer name")
+# Customer Information Section with collapse/expand
+customer_expander = st.expander("Customer Information", expanded=st.session_state.customer_details_expanded)
+with customer_expander:
+    col1, col2 = st.columns(2)
 
-with col2:
-    address = st.text_area("Address", placeholder="Enter address", height=100)
-    mobile_number = st.text_input("Mobile Number", placeholder="Enter mobile number")
+    with col1:
+        bill_number = st.text_input("Bill Number", placeholder="Enter bill number")
+        customer_acc = st.text_input("Customer Acc Number", placeholder="Enter account number")
+        customer_name = st.text_input("Name", placeholder="Enter customer name")
+
+    with col2:
+        address = st.text_area("Address", placeholder="Enter address", height=100)
+        mobile_number = st.text_input("Mobile Number", placeholder="Enter mobile number")
 
 st.markdown("---")
 
@@ -287,19 +348,29 @@ with col1:
     weight_gm = st.number_input(
         "Weight (gm)", 
         min_value=0.0, 
-        value=0.0,
+        value=None,
         step=0.1,
-        format="%.3f"
+        format="%.3f",
+        placeholder="0.000"
     )
+    if weight_gm is None:
+        weight_gm = 0.0
 
 with col2:
+    # Calculate wastage based on wastage percentage if weight is provided
+    suggested_wastage = (weight_gm * st.session_state.base_values['wastage_percentage']) / 100 if weight_gm > 0 else 0.0
+    
     wastage_gm = st.number_input(
         "Wastage (gm)", 
         min_value=0.0, 
-        value=0.0,
+        value=suggested_wastage if weight_gm > 0 else None,
         step=0.1,
-        format="%.3f"
+        format="%.3f",
+        placeholder="0.000",
+        help=f"Suggested: {suggested_wastage:.3f} gm ({st.session_state.base_values['wastage_percentage']}%)"
     )
+    if wastage_gm is None:
+        wastage_gm = 0.0
 
 with col3:
     net_weight_gm = weight_gm + wastage_gm
@@ -322,11 +393,20 @@ mc_type = st.radio(
 
 mc_per_gram = st.session_state.base_values['metal_mc_per_gm']
 
+# Determine minimum making charge based on metal type
+is_gold = 'Gold' in selected_type
+is_silver = 'Silver' in selected_type
+min_making_charge = 250.0 if is_gold else (200.0 if is_silver else 0.0)
+
 if mc_type == "Rupees (₹)":
+    calculated_mc = mc_per_gram * net_weight_gm
+    # Apply minimum making charge
+    default_mc = max(calculated_mc, min_making_charge)
+    
     making_charges = st.number_input(
-        f"Making Charges (₹) [Auto: {mc_per_gram * net_weight_gm:.2f}]",
-        min_value=0.0,
-        value=mc_per_gram * net_weight_gm,
+        f"Making Charges (₹) [Auto: {calculated_mc:.2f}, Min: {min_making_charge:.0f}]",
+        min_value=min_making_charge,
+        value=default_mc,
         step=10.0,
         format="%.2f"
     )
@@ -339,8 +419,10 @@ else:
         step=0.5,
         format="%.2f"
     )
-    making_charges = j_amount * (mc_percentage / 100)
-    st.info(f"Making Charges: ₹{making_charges:.2f}")
+    calculated_mc = j_amount * (mc_percentage / 100)
+    # Apply minimum making charge
+    making_charges = max(calculated_mc, min_making_charge)
+    st.info(f"Making Charges: ₹{making_charges:.2f} (Min: ₹{min_making_charge:.0f})")
 
 # Base amount before GST
 amount_before_gst = j_amount + making_charges
@@ -447,8 +529,3 @@ st.download_button(
     type="primary",
     use_container_width=True
 )
-#st.info("💡 Click the button above to download the PDF. You can then open it in a new tab and print it to your thermal printer.")
-
-# Footer
-st.markdown("---")
-st.caption("💎 Jewel Calc - Professional Jewellery Invoicing System | Made with Streamlit")

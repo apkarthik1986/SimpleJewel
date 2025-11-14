@@ -2,3 +2,5 @@ streamlit>=1.51.0
 pandas>=2.3.3
 reportlab>=4.0.0
 pytz>=2024.1
+beautifulsoup4>=4.9.0
+requests>=2.25.0
