@@ -32,13 +32,16 @@ def fetch_gold_rates():
         # Try to extract rates using common patterns
         import re
         
-        # Look for "1 Gm Gold 22Kt" or similar patterns
-        gold_22_match = re.search(r'(?:1\s*Gm\s*Gold\s*22\s*[Kk]t?|22\s*[Kk]t?\s*Gold).*?(\d+)', text, re.IGNORECASE)
-        gold_18_match = re.search(r'(?:1\s*Gm\s*Gold\s*18\s*[Kk]t?|18\s*[Kk]t?\s*Gold).*?(\d+)', text, re.IGNORECASE)
-        silver_match = re.search(r'(?:1\s*Gm\s*Silver|Silver).*?(\d+)', text, re.IGNORECASE)
+        # Look for "1 Gm Gold 22Kt" or similar patterns - capture all digits including longer numbers like 11740
+        gold_22_match = re.search(r'(?:1\s*Gm\s*Gold\s*22\s*[Kk]t?|22\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
+        gold_20_match = re.search(r'(?:1\s*Gm\s*Gold\s*20\s*[Kk]t?|20\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
+        gold_18_match = re.search(r'(?:1\s*Gm\s*Gold\s*18\s*[Kk]t?|18\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
+        silver_match = re.search(r'(?:1\s*Gm\s*Silver|Silver).*?(\d{2,})', text, re.IGNORECASE)
         
         if gold_22_match:
             rates['Gold 22K/916'] = int(gold_22_match.group(1))
+        if gold_20_match:
+            rates['Gold 20K/833'] = int(gold_20_match.group(1))
         if gold_18_match:
             rates['Gold 18K/750'] = int(gold_18_match.group(1))
         if silver_match:
@@ -47,7 +50,7 @@ def fetch_gold_rates():
         return rates if rates else None
         
     except Exception as e:
-        st.error(f"Error fetching gold rates: {str(e)}")
+        # Don't show error, just return None
         return None
 
 # Page configuration
@@ -61,12 +64,14 @@ st.set_page_config(
 if 'base_values' not in st.session_state:
     st.session_state.base_values = {
         'metal_rates': {
-            'Gold 22K/916': 5500,
-            'Gold 18K/750': 4564,
-            'Silver': 400
+            'Gold 22K/916': 0,
+            'Gold 20K/833': 0,
+            'Gold 18K/750': 0,
+            'Silver': 0
         },
         'wastage_percentage': 13,
-        'metal_mc_per_gm': 80
+        'gold_mc_per_gm': 0,
+        'silver_mc_per_gm': 0
     }
 
 # Initialize customer details expand state
@@ -258,7 +263,10 @@ with st.sidebar:
                 st.success("Rates updated successfully!")
                 st.rerun()
             else:
-                st.warning("Could not fetch rates from website. Please update manually.")
+                # Set rates to 0 if error
+                for metal_type in st.session_state.base_values['metal_rates'].keys():
+                    st.session_state.base_values['metal_rates'][metal_type] = 0
+                st.warning("Could not fetch rates from website. Rates set to 0. Please update manually.")
     
     st.markdown("---")
     
@@ -282,10 +290,17 @@ with st.sidebar:
         step=0.5
     )
 
-    st.session_state.base_values['metal_mc_per_gm'] = st.number_input(
-        "Metal MC (₹ per gram)", 
+    st.session_state.base_values['gold_mc_per_gm'] = st.number_input(
+        "Gold MC (₹ per gram)", 
         min_value=0, 
-        value=st.session_state.base_values['metal_mc_per_gm'],
+        value=st.session_state.base_values['gold_mc_per_gm'],
+        step=5
+    )
+
+    st.session_state.base_values['silver_mc_per_gm'] = st.number_input(
+        "Silver MC (₹ per gram)", 
+        min_value=0, 
+        value=st.session_state.base_values['silver_mc_per_gm'],
         step=5
     )
 
@@ -293,12 +308,14 @@ with st.sidebar:
     if st.button("🔄 Reset to Defaults"):
         st.session_state.base_values = {
             'metal_rates': {
-                'Gold 22K/916': 5500,
-                'Gold 18K/750': 4564,
-                'Silver': 400
+                'Gold 22K/916': 0,
+                'Gold 20K/833': 0,
+                'Gold 18K/750': 0,
+                'Silver': 0
             },
             'wastage_percentage': 13,
-            'metal_mc_per_gm': 80
+            'gold_mc_per_gm': 0,
+            'silver_mc_per_gm': 0
         }
         st.rerun()
 
@@ -391,11 +408,12 @@ mc_type = st.radio(
     horizontal=True
 )
 
-mc_per_gram = st.session_state.base_values['metal_mc_per_gm']
-
-# Determine minimum making charge based on metal type
+# Determine MC per gram based on metal type
 is_gold = 'Gold' in selected_type
 is_silver = 'Silver' in selected_type
+mc_per_gram = st.session_state.base_values['gold_mc_per_gm'] if is_gold else st.session_state.base_values['silver_mc_per_gm']
+
+# Determine minimum making charge based on metal type
 min_making_charge = 250.0 if is_gold else (200.0 if is_silver else 0.0)
 
 if mc_type == "Rupees (₹)":
