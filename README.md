@@ -44,11 +44,13 @@ The application will open in your default web browser at `http://localhost:8501`
 
 ### Configure Base Values (Sidebar)
 
-1. **Set Gold Rates**: Adjust rates for different gold purities (22K, 20K, 18K)
-2. **Set Silver Rate**: Configure silver price per gram
-3. **Set Making Charges**: Define making charges per gram for gold and silver
-4. **Value Addition**: Set value addition percentage for gold
-5. **Reset**: Use "Reset to Defaults" button to restore default values
+1. **Fetch Rates**: Click "Fetch Rates from Website" to automatically fetch current rates (if fetch fails, rates are set to 0)
+2. **Set Gold Rates**: Manually adjust rates for different gold purities (22K, 20K, 18K)
+3. **Set Silver Rate**: Configure silver price per gram
+4. **Set Wastage**: Define wastage percentage (default 13%)
+5. **Set Gold MC**: Define Gold making charges per gram
+6. **Set Silver MC**: Define Silver making charges per gram (separate from Gold MC)
+7. **Reset**: Use "Reset to Defaults" button to restore default values (all rates to 0)
 
 ### Create an Estimate
 
@@ -129,13 +131,13 @@ SimpleJewel/
 ## 🔧 Configuration
 
 Default values in the application:
-- Gold 22K/916: ₹5,500/gram
-- Gold 20K/833: ₹5,044/gram
-- Gold 18K/750: ₹4,564/gram
-- Silver: ₹400/gram
-- Value Addition (Gold): 13%
-- Gold Making Charges: ₹80/gram
-- Silver Making Charges: ₹8/gram
+- Gold 22K/916: ₹0/gram (to be configured manually or fetched)
+- Gold 20K/833: ₹0/gram (to be configured manually or fetched)
+- Gold 18K/750: ₹0/gram (to be configured manually or fetched)
+- Silver: ₹0/gram (to be configured manually or fetched)
+- Wastage: 13%
+- Gold Making Charges: ₹0/gram (to be configured manually)
+- Silver Making Charges: ₹0/gram (to be configured manually)
 - GST: 3% (1.5% CGST + 1.5% SGST)
 
 All values can be adjusted via the sidebar during runtime.
