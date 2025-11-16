@@ -76,7 +76,7 @@ def generate_thermal_pdf(data):
     c = canvas.Canvas(pdf_filename, pagesize=(width, height))
     
     # Set font
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 14)
     
     # Starting position
     y = height - 10 * mm
@@ -88,7 +88,7 @@ def generate_thermal_pdf(data):
     # Date and time in IST
     ist = pytz.timezone('Asia/Kolkata')
     current_time = datetime.now(ist)
-    c.setFont("Helvetica", 8)
+    c.setFont("Helvetica", 10)
     c.drawCentredString(width / 2, y, current_time.strftime('%d/%m/%Y %H:%M:%S IST'))
     y -= 5 * mm
     
@@ -96,7 +96,7 @@ def generate_thermal_pdf(data):
     y -= 4 * mm
     
     # Customer Information
-    c.setFont("Helvetica-Bold", 8)
+    c.setFont("Helvetica-Bold", 10)
     if data['bill_number']:
         c.drawString(5 * mm, y, f"Bill No: {data['bill_number']}")
         y -= 4 * mm
@@ -121,11 +121,11 @@ def generate_thermal_pdf(data):
     y -= 4 * mm
     
     # Item Details
-    c.setFont("Helvetica-Bold", 8)
+    c.setFont("Helvetica-Bold", 11)
     c.drawString(5 * mm, y, "ITEM DETAILS")
     y -= 4 * mm
     
-    c.setFont("Helvetica", 8)
+    c.setFont("Helvetica", 10)
     c.drawString(5 * mm, y, f"Type: {data['selected_type']}")
     y -= 4 * mm
     
@@ -138,7 +138,7 @@ def generate_thermal_pdf(data):
     c.drawString(5 * mm, y, f"Wastage: {data['wastage_gm']:.3f} gm")
     y -= 4 * mm
     
-    c.setFont("Helvetica-Bold", 8)
+    c.setFont("Helvetica-Bold", 10)
     c.drawString(5 * mm, y, f"Net Weight: {data['net_weight_gm']:.3f} gm")
     y -= 5 * mm
     
@@ -146,11 +146,11 @@ def generate_thermal_pdf(data):
     y -= 4 * mm
     
     # Amount Calculation
-    c.setFont("Helvetica-Bold", 8)
+    c.setFont("Helvetica-Bold", 11)
     c.drawString(5 * mm, y, "AMOUNT CALCULATION")
     y -= 4 * mm
     
-    c.setFont("Helvetica", 8)
+    c.setFont("Helvetica", 10)
     c.drawString(5 * mm, y, f"J Amount:")
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['j_amount']:.2f}")
     y -= 4 * mm
@@ -159,24 +159,24 @@ def generate_thermal_pdf(data):
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['making_charges']:.2f}")
     y -= 4 * mm
     
-    c.setFont("Helvetica-Bold", 8)
+    c.setFont("Helvetica-Bold", 10)
     c.drawString(5 * mm, y, f"Amount:")
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['amount_before_gst']:.2f}")
     y -= 5 * mm
     
     # Add discount if exists
     if data.get('discount_amount', 0) > 0:
-        c.setFont("Helvetica", 8)
+        c.setFont("Helvetica", 10)
         c.drawString(5 * mm, y, f"Discount:")
         c.drawRightString(width - 5 * mm, y, f"Rs.{data['discount_amount']:.2f}")
         y -= 4 * mm
         
-        c.setFont("Helvetica-Bold", 8)
+        c.setFont("Helvetica-Bold", 10)
         c.drawString(5 * mm, y, f"After Discount:")
         c.drawRightString(width - 5 * mm, y, f"Rs.{data['amount_after_discount']:.2f}")
         y -= 5 * mm
     
-    c.setFont("Helvetica", 8)
+    c.setFont("Helvetica", 10)
     c.drawString(5 * mm, y, f"CGST 1.5%:")
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['cgst_amount']:.2f}")
     y -= 4 * mm
@@ -189,7 +189,7 @@ def generate_thermal_pdf(data):
     y -= 4 * mm
     
     # Final Amount
-    c.setFont("Helvetica-Bold", 10)
+    c.setFont("Helvetica-Bold", 13)
     c.drawString(5 * mm, y, "Total Amount:")
     c.drawRightString(width - 5 * mm, y, f"Rs.{data['final_amount']:.2f}")
     y -= 5 * mm
