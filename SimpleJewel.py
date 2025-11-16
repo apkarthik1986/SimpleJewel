@@ -263,20 +263,20 @@ with st.sidebar:
                 st.success("Rates updated successfully!")
                 st.rerun()
             else:
-                # Set rates to 0 if error
-                for metal_type in st.session_state.base_values['metal_rates'].keys():
-                    st.session_state.base_values['metal_rates'][metal_type] = 0
-                st.warning("Could not fetch rates from website. Rates set to 0. Please update manually.")
+                # Keep existing rates if error occurs
+                st.error("Could not fetch rates from website. Please update manually.")
     
     st.markdown("---")
     
     # Update metal rates
     for metal_type in st.session_state.base_values['metal_rates'].keys():
+        # Use a unique key for each input to ensure proper state management
         st.session_state.base_values['metal_rates'][metal_type] = st.number_input(
             f"{metal_type} Rate", 
             min_value=0, 
             value=st.session_state.base_values['metal_rates'][metal_type],
-            step=10
+            step=10,
+            key=f"rate_{metal_type}"
         )
 
     st.markdown("---")
@@ -287,21 +287,24 @@ with st.sidebar:
         min_value=0.0, 
         max_value=100.0,
         value=float(st.session_state.base_values['wastage_percentage']),
-        step=0.5
+        step=0.5,
+        key="wastage_percentage"
     )
 
     st.session_state.base_values['gold_mc_per_gm'] = st.number_input(
         "Gold MC (₹ per gram)", 
         min_value=0, 
         value=st.session_state.base_values['gold_mc_per_gm'],
-        step=5
+        step=5,
+        key="gold_mc_per_gm"
     )
 
     st.session_state.base_values['silver_mc_per_gm'] = st.number_input(
         "Silver MC (₹ per gram)", 
         min_value=0, 
         value=st.session_state.base_values['silver_mc_per_gm'],
-        step=5
+        step=5,
+        key="silver_mc_per_gm"
     )
 
     st.markdown("---")
