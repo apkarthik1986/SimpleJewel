@@ -7,113 +7,6 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 import os
 import base64
-import requests
-from bs4 import BeautifulSoup
-
-# Function to fetch gold rates from website
-def fetch_gold_rates():
-    """Fetch gold rates from thejewellersassociation.org using Selenium to handle popups"""
-    import re
-    
-    # First try with requests (faster if it works)
-    try:
-        url = "https://thejewellersassociation.org/"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.content, 'html.parser')
-        text = soup.get_text()
-        
-        # Try to extract rates
-        rates = _extract_rates_from_text(text)
-        if rates:
-            return rates
-    except:
-        pass  # Fall back to Selenium
-    
-    # Try with Selenium to handle JavaScript/popups
-    try:
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        from selenium.webdriver.chrome.service import Service
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.support.ui import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as EC
-        from selenium.common.exceptions import TimeoutException
-        import time
-        
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--disable-popup-blocking')
-        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-        
-        driver = webdriver.Chrome(options=chrome_options)
-        
-        try:
-            url = "https://thejewellersassociation.org/"
-            driver.get(url)
-            
-            # Wait for page to load and handle any popups
-            time.sleep(3)
-            
-            # Try to close any popup/modal if present
-            try:
-                # Common popup close button selectors
-                close_buttons = driver.find_elements(By.CSS_SELECTOR, 
-                    'button.close, .modal-close, .popup-close, [aria-label="Close"], .btn-close')
-                for button in close_buttons:
-                    try:
-                        button.click()
-                        time.sleep(1)
-                    except:
-                        pass
-            except:
-                pass
-            
-            # Wait a bit more for content to load
-            time.sleep(2)
-            
-            # Get the page text after handling popups
-            text = driver.find_element(By.TAG_NAME, 'body').text
-            
-            rates = _extract_rates_from_text(text)
-            return rates if rates else None
-            
-        finally:
-            driver.quit()
-            
-    except Exception as e:
-        # Return None if both methods fail
-        return None
-
-def _extract_rates_from_text(text):
-    """Extract gold and silver rates from text content"""
-    import re
-    
-    rates = {}
-    
-    # Look for "1 Gm Gold 22Kt" or similar patterns - capture all digits including longer numbers like 11740
-    gold_22_match = re.search(r'(?:1\s*Gm\s*Gold\s*22\s*[Kk]t?|22\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
-    gold_20_match = re.search(r'(?:1\s*Gm\s*Gold\s*20\s*[Kk]t?|20\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
-    gold_18_match = re.search(r'(?:1\s*Gm\s*Gold\s*18\s*[Kk]t?|18\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
-    silver_match = re.search(r'(?:1\s*Gm\s*Silver|Silver).*?(\d{2,})', text, re.IGNORECASE)
-    
-    if gold_22_match:
-        rates['Gold 22K/916'] = int(gold_22_match.group(1))
-    if gold_20_match:
-        rates['Gold 20K/833'] = int(gold_20_match.group(1))
-    if gold_18_match:
-        rates['Gold 18K/750'] = int(gold_18_match.group(1))
-    if silver_match:
-        rates['Silver'] = int(silver_match.group(1))
-    
-    return rates if rates else None
 
 # Page configuration
 st.set_page_config(
@@ -131,7 +24,8 @@ if 'base_values' not in st.session_state:
             'Gold 18K/750': 0,
             'Silver': 0
         },
-        'wastage_percentage': 13,
+        'gold_wastage_percentage': 13,
+        'silver_wastage_percentage': 13,
         'gold_mc_per_gm': 0,
         'silver_mc_per_gm': 0
     }
@@ -314,22 +208,6 @@ with st.sidebar:
 
     st.subheader("Metal Rates (₹ per gram)")
     
-    # Button to fetch rates from website
-    if st.button("🔄 Fetch Rates from Website", help="Fetch latest rates from thejewellersassociation.org"):
-        with st.spinner("Fetching rates..."):
-            fetched_rates = fetch_gold_rates()
-            if fetched_rates:
-                for metal_type, rate in fetched_rates.items():
-                    if metal_type in st.session_state.base_values['metal_rates']:
-                        st.session_state.base_values['metal_rates'][metal_type] = rate
-                st.success("Rates updated successfully!")
-                st.rerun()
-            else:
-                # Keep existing rates if error occurs
-                st.error("Could not fetch rates from website. Please update manually.")
-    
-    st.markdown("---")
-    
     # Update metal rates
     for metal_type in st.session_state.base_values['metal_rates'].keys():
         # Use a unique key for each input to ensure proper state management
@@ -342,16 +220,28 @@ with st.sidebar:
         )
 
     st.markdown("---")
-    st.subheader("Other Settings")
+    st.subheader("Wastage Settings")
 
-    st.session_state.base_values['wastage_percentage'] = st.number_input(
-        "Wastage (%)", 
+    st.session_state.base_values['gold_wastage_percentage'] = st.number_input(
+        "Gold Wastage (%)", 
         min_value=0.0, 
         max_value=100.0,
-        value=float(st.session_state.base_values['wastage_percentage']),
+        value=float(st.session_state.base_values['gold_wastage_percentage']),
         step=0.5,
-        key="wastage_percentage"
+        key="gold_wastage_percentage"
     )
+
+    st.session_state.base_values['silver_wastage_percentage'] = st.number_input(
+        "Silver Wastage (%)", 
+        min_value=0.0, 
+        max_value=100.0,
+        value=float(st.session_state.base_values['silver_wastage_percentage']),
+        step=0.5,
+        key="silver_wastage_percentage"
+    )
+
+    st.markdown("---")
+    st.subheader("Making Charges")
 
     st.session_state.base_values['gold_mc_per_gm'] = st.number_input(
         "Gold MC (₹ per gram)", 
@@ -378,14 +268,32 @@ with st.sidebar:
                 'Gold 18K/750': 0,
                 'Silver': 0
             },
-            'wastage_percentage': 13,
+            'gold_wastage_percentage': 13,
+            'silver_wastage_percentage': 13,
             'gold_mc_per_gm': 0,
             'silver_mc_per_gm': 0
         }
         st.rerun()
 
 # Main App
-st.title("💎 Jewel Calc 💎")
+col_title, col_reset = st.columns([3, 1])
+with col_title:
+    st.title("💎 Jewel Calc 💎")
+with col_reset:
+    if st.button("🔄 Reset All", help="Reset all base values to defaults"):
+        st.session_state.base_values = {
+            'metal_rates': {
+                'Gold 22K/916': 0,
+                'Gold 20K/833': 0,
+                'Gold 18K/750': 0,
+                'Silver': 0
+            },
+            'gold_wastage_percentage': 13,
+            'silver_wastage_percentage': 13,
+            'gold_mc_per_gm': 0,
+            'silver_mc_per_gm': 0
+        }
+        st.rerun()
 
 # Display time in IST
 ist = pytz.timezone('Asia/Kolkata')
@@ -440,7 +348,10 @@ with col1:
 
 with col2:
     # Calculate wastage based on wastage percentage if weight is provided
-    suggested_wastage = (weight_gm * st.session_state.base_values['wastage_percentage']) / 100 if weight_gm > 0 else 0.0
+    # Determine wastage percentage based on metal type
+    is_gold = 'Gold' in selected_type
+    wastage_percentage = st.session_state.base_values['gold_wastage_percentage'] if is_gold else st.session_state.base_values['silver_wastage_percentage']
+    suggested_wastage = (weight_gm * wastage_percentage) / 100 if weight_gm > 0 else 0.0
     
     wastage_gm = st.number_input(
         "Wastage (gm)", 
@@ -449,7 +360,7 @@ with col2:
         step=0.1,
         format="%.3f",
         placeholder="0.000",
-        help=f"Suggested: {suggested_wastage:.3f} gm ({st.session_state.base_values['wastage_percentage']}%)"
+        help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)"
     )
     if wastage_gm is None:
         wastage_gm = 0.0
