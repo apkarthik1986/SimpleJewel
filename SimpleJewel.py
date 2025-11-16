@@ -12,46 +12,108 @@ from bs4 import BeautifulSoup
 
 # Function to fetch gold rates from website
 def fetch_gold_rates():
-    """Fetch gold rates from thejewellersassociation.org"""
+    """Fetch gold rates from thejewellersassociation.org using Selenium to handle popups"""
+    import re
+    
+    # First try with requests (faster if it works)
     try:
         url = "https://thejewellersassociation.org/"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
-        
-        rates = {}
-        
-        # Try to find gold rates - this is a generic approach, might need adjustment based on actual website structure
-        # Look for text patterns like "22K", "18K", "Silver" followed by numbers
         text = soup.get_text()
         
-        # Try to extract rates using common patterns
-        import re
+        # Try to extract rates
+        rates = _extract_rates_from_text(text)
+        if rates:
+            return rates
+    except:
+        pass  # Fall back to Selenium
+    
+    # Try with Selenium to handle JavaScript/popups
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.common.exceptions import TimeoutException
+        import time
         
-        # Look for "1 Gm Gold 22Kt" or similar patterns - capture all digits including longer numbers like 11740
-        gold_22_match = re.search(r'(?:1\s*Gm\s*Gold\s*22\s*[Kk]t?|22\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
-        gold_20_match = re.search(r'(?:1\s*Gm\s*Gold\s*20\s*[Kk]t?|20\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
-        gold_18_match = re.search(r'(?:1\s*Gm\s*Gold\s*18\s*[Kk]t?|18\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
-        silver_match = re.search(r'(?:1\s*Gm\s*Silver|Silver).*?(\d{2,})', text, re.IGNORECASE)
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-popup-blocking')
+        chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         
-        if gold_22_match:
-            rates['Gold 22K/916'] = int(gold_22_match.group(1))
-        if gold_20_match:
-            rates['Gold 20K/833'] = int(gold_20_match.group(1))
-        if gold_18_match:
-            rates['Gold 18K/750'] = int(gold_18_match.group(1))
-        if silver_match:
-            rates['Silver'] = int(silver_match.group(1))
+        driver = webdriver.Chrome(options=chrome_options)
         
-        return rates if rates else None
-        
+        try:
+            url = "https://thejewellersassociation.org/"
+            driver.get(url)
+            
+            # Wait for page to load and handle any popups
+            time.sleep(3)
+            
+            # Try to close any popup/modal if present
+            try:
+                # Common popup close button selectors
+                close_buttons = driver.find_elements(By.CSS_SELECTOR, 
+                    'button.close, .modal-close, .popup-close, [aria-label="Close"], .btn-close')
+                for button in close_buttons:
+                    try:
+                        button.click()
+                        time.sleep(1)
+                    except:
+                        pass
+            except:
+                pass
+            
+            # Wait a bit more for content to load
+            time.sleep(2)
+            
+            # Get the page text after handling popups
+            text = driver.find_element(By.TAG_NAME, 'body').text
+            
+            rates = _extract_rates_from_text(text)
+            return rates if rates else None
+            
+        finally:
+            driver.quit()
+            
     except Exception as e:
-        # Don't show error, just return None
+        # Return None if both methods fail
         return None
+
+def _extract_rates_from_text(text):
+    """Extract gold and silver rates from text content"""
+    import re
+    
+    rates = {}
+    
+    # Look for "1 Gm Gold 22Kt" or similar patterns - capture all digits including longer numbers like 11740
+    gold_22_match = re.search(r'(?:1\s*Gm\s*Gold\s*22\s*[Kk]t?|22\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
+    gold_20_match = re.search(r'(?:1\s*Gm\s*Gold\s*20\s*[Kk]t?|20\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
+    gold_18_match = re.search(r'(?:1\s*Gm\s*Gold\s*18\s*[Kk]t?|18\s*[Kk]t?\s*Gold).*?(\d{3,})', text, re.IGNORECASE)
+    silver_match = re.search(r'(?:1\s*Gm\s*Silver|Silver).*?(\d{2,})', text, re.IGNORECASE)
+    
+    if gold_22_match:
+        rates['Gold 22K/916'] = int(gold_22_match.group(1))
+    if gold_20_match:
+        rates['Gold 20K/833'] = int(gold_20_match.group(1))
+    if gold_18_match:
+        rates['Gold 18K/750'] = int(gold_18_match.group(1))
+    if silver_match:
+        rates['Silver'] = int(silver_match.group(1))
+    
+    return rates if rates else None
 
 # Page configuration
 st.set_page_config(
@@ -263,20 +325,20 @@ with st.sidebar:
                 st.success("Rates updated successfully!")
                 st.rerun()
             else:
-                # Set rates to 0 if error
-                for metal_type in st.session_state.base_values['metal_rates'].keys():
-                    st.session_state.base_values['metal_rates'][metal_type] = 0
-                st.warning("Could not fetch rates from website. Rates set to 0. Please update manually.")
+                # Keep existing rates if error occurs
+                st.error("Could not fetch rates from website. Please update manually.")
     
     st.markdown("---")
     
     # Update metal rates
     for metal_type in st.session_state.base_values['metal_rates'].keys():
+        # Use a unique key for each input to ensure proper state management
         st.session_state.base_values['metal_rates'][metal_type] = st.number_input(
             f"{metal_type} Rate", 
             min_value=0, 
             value=st.session_state.base_values['metal_rates'][metal_type],
-            step=10
+            step=10,
+            key=f"rate_{metal_type}"
         )
 
     st.markdown("---")
@@ -287,21 +349,24 @@ with st.sidebar:
         min_value=0.0, 
         max_value=100.0,
         value=float(st.session_state.base_values['wastage_percentage']),
-        step=0.5
+        step=0.5,
+        key="wastage_percentage"
     )
 
     st.session_state.base_values['gold_mc_per_gm'] = st.number_input(
         "Gold MC (₹ per gram)", 
         min_value=0, 
         value=st.session_state.base_values['gold_mc_per_gm'],
-        step=5
+        step=5,
+        key="gold_mc_per_gm"
     )
 
     st.session_state.base_values['silver_mc_per_gm'] = st.number_input(
         "Silver MC (₹ per gram)", 
         min_value=0, 
         value=st.session_state.base_values['silver_mc_per_gm'],
-        step=5
+        step=5,
+        key="silver_mc_per_gm"
     )
 
     st.markdown("---")
