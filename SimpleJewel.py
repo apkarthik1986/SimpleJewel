@@ -82,7 +82,7 @@ def generate_thermal_pdf(data):
     y = height - 10 * mm
     
     # Title
-    c.drawCentredString(width / 2, y, "JEWELLERY INVOICE")
+    c.drawCentredString(width / 2, y, "ESTIMATE")
     y -= 5 * mm
     
     # Date and time in IST
