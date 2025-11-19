@@ -191,7 +191,7 @@ def generate_thermal_pdf(data):
     # Final Amount
     c.setFont("Helvetica-Bold", 13)
     c.drawString(5 * mm, y, "Total Amount:")
-    c.drawRightString(width - 5 * mm, y, f"Rs.{data['final_amount']:.2f}")
+    c.drawRightString(width - 5 * mm, y, f"Rs.{round(data['final_amount']):,}")
     y -= 5 * mm
     
     c.drawString(5 * mm, y, "-" * 35)
@@ -514,7 +514,7 @@ st.metric("SGST 1.5% (₹)", f"{sgst_amount:.2f}")
 final_amount = amount_after_discount + cgst_amount + sgst_amount
 
 st.markdown("---")
-st.success(f"### 💰 Amount Incl. GST: ₹{final_amount:.2f}")
+st.success(f"### 💰 Amount Incl. GST: ₹{round(final_amount):}")
 
 # Download PDF Button
 st.markdown("---")
