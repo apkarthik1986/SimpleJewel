@@ -140,8 +140,8 @@ Default values in the application:
 - Gold 20K/833: ₹0/gram (to be configured manually)
 - Gold 18K/750: ₹0/gram (to be configured manually)
 - Silver: ₹0/gram (to be configured manually)
-- Gold Wastage: 13%
-- Silver Wastage: 13%
+- Gold Wastage: 0%
+- Silver Wastage: 0%
 - Gold Making Charges: ₹0/gram (to be configured manually)
 - Silver Making Charges: ₹0/gram (to be configured manually)
 - GST: 3% (1.5% CGST + 1.5% SGST)
@@ -167,3 +167,4 @@ For issues, questions, or suggestions, please open an issue on GitHub.
 ---
 
 **Made with ❤️ using Streamlit**
+**Special thanks to Ashwin Prakash Chand**
