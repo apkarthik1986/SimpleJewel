@@ -77,9 +77,13 @@ if 'base_values' not in st.session_state:
 if 'customer_details_expanded' not in st.session_state:
     st.session_state.customer_details_expanded = False
 
-# Initialize reset counter to force widget recreation when reset is clicked
+# Initialize reset counter to force widget recreation when reset is clicked (for sidebar base values)
 if 'reset_counter' not in st.session_state:
     st.session_state.reset_counter = 0
+
+# Initialize app input reset counter to reset only app page inputs
+if 'app_input_reset_counter' not in st.session_state:
+    st.session_state.app_input_reset_counter = 0
 
 # Function to generate PDF for thermal printer
 def generate_thermal_pdf(data):
@@ -366,22 +370,10 @@ col_title, col_reset = st.columns([3, 1])
 with col_title:
     st.title("💎 Jewel Calc 💎")
 with col_reset:
-    if st.button("🔄 Reset All", help="Reset all base values to defaults"):
-        st.session_state.base_values = {
-            'metal_rates': {
-                'Gold 22K/916': 0,
-                'Gold 20K/833': 0,
-                'Gold 18K/750': 0,
-                'Silver': 0
-            },
-            'gold_wastage_percentage': 0,
-            'silver_wastage_percentage': 0,
-            'gold_mc_per_gm': 0,
-            'silver_mc_per_gm': 0,
-            'last_date': get_current_date_ist()
-        }
-        save_base_values(st.session_state.base_values)
-        st.session_state.reset_counter += 1
+    if st.button("🔄 Reset All", help="Reset all input values on this page"):
+        # Only increment app input reset counter to clear input fields
+        # Do NOT reset base values (metal rates, wastage %, MC per gram)
+        st.session_state.app_input_reset_counter += 1
         st.rerun()
 
 # Display time in IST
@@ -395,13 +387,13 @@ with customer_expander:
     col1, col2 = st.columns(2)
 
     with col1:
-        bill_number = st.text_input("Bill Number", placeholder="Enter bill number")
-        customer_acc = st.text_input("Customer Acc Number", placeholder="Enter account number")
-        customer_name = st.text_input("Name", placeholder="Enter customer name")
+        bill_number = st.text_input("Bill Number", placeholder="Enter bill number", key=f"bill_number_{st.session_state.app_input_reset_counter}")
+        customer_acc = st.text_input("Customer Acc Number", placeholder="Enter account number", key=f"customer_acc_{st.session_state.app_input_reset_counter}")
+        customer_name = st.text_input("Name", placeholder="Enter customer name", key=f"customer_name_{st.session_state.app_input_reset_counter}")
 
     with col2:
-        address = st.text_area("Address", placeholder="Enter address", height=100)
-        mobile_number = st.text_input("Mobile Number", placeholder="Enter mobile number")
+        address = st.text_area("Address", placeholder="Enter address", height=100, key=f"address_{st.session_state.app_input_reset_counter}")
+        mobile_number = st.text_input("Mobile Number", placeholder="Enter mobile number", key=f"mobile_number_{st.session_state.app_input_reset_counter}")
 
 st.markdown("---")
 
@@ -412,7 +404,8 @@ st.header("Item Calculation")
 selected_type = st.selectbox(
     "Type",
     options=list(st.session_state.base_values['metal_rates'].keys()),
-    index=0
+    index=0,
+    key=f"selected_type_{st.session_state.app_input_reset_counter}"
 )
 
 # Get rate per gram based on selection
@@ -430,7 +423,8 @@ with col1:
         value=None,
         step=0.1,
         format="%.3f",
-        placeholder="0.000"
+        placeholder="0.000",
+        key=f"weight_gm_{st.session_state.app_input_reset_counter}"
     )
     if weight_gm is None:
         weight_gm = 0.0
@@ -449,7 +443,8 @@ with col2:
         step=0.1,
         format="%.3f",
         placeholder="0.000",
-        help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)"
+        help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)",
+        key=f"wastage_gm_{st.session_state.app_input_reset_counter}"
     )
     if wastage_gm is None:
         wastage_gm = 0.0
@@ -470,7 +465,8 @@ st.subheader("Making Charges")
 mc_type = st.radio(
     "Making Charge Type",
     options=["Rupees (₹)", "Percentage (%)"],
-    horizontal=True
+    horizontal=True,
+    key=f"mc_type_{st.session_state.app_input_reset_counter}"
 )
 
 # Determine MC per gram based on metal type
@@ -492,7 +488,8 @@ if mc_type == "Rupees (₹)":
         value=default_mc if net_weight_gm > 0 else None,
         step=10.0,
         format="%.2f",
-        placeholder=f"{min_making_charge:.0f}"
+        placeholder=f"{min_making_charge:.0f}",
+        key=f"making_charges_rupees_{st.session_state.app_input_reset_counter}"
     )
     if making_charges is None:
         making_charges = min_making_charge
@@ -504,7 +501,8 @@ else:
         value=None,
         step=0.5,
         format="%.2f",
-        placeholder="0.0"
+        placeholder="0.0",
+        key=f"mc_percentage_{st.session_state.app_input_reset_counter}"
     )
     if mc_percentage is None:
         mc_percentage = 0.0
@@ -532,7 +530,8 @@ st.subheader("Discount")
 discount_type = st.radio(
     "Discount Type",
     options=["None", "Rupees (₹)", "Percentage (%)"],
-    horizontal=True
+    horizontal=True,
+    key=f"discount_type_{st.session_state.app_input_reset_counter}"
 )
 
 discount_amount = 0.0
@@ -544,7 +543,8 @@ if discount_type == "Rupees (₹)":
         value=None,
         step=10.0,
         format="%.2f",
-        placeholder="0.00"
+        placeholder="0.00",
+        key=f"discount_rupees_{st.session_state.app_input_reset_counter}"
     )
     discount_amount = discount_input if discount_input is not None else 0.0
 elif discount_type == "Percentage (%)":
@@ -555,7 +555,8 @@ elif discount_type == "Percentage (%)":
         value=None,
         step=0.5,
         format="%.2f",
-        placeholder="0.00"
+        placeholder="0.00",
+        key=f"discount_percentage_{st.session_state.app_input_reset_counter}"
     )
     discount_percentage = discount_percentage_input if discount_percentage_input is not None else 0.0
     discount_amount = amount_before_gst * (discount_percentage / 100)
