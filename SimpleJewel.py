@@ -24,8 +24,8 @@ if 'base_values' not in st.session_state:
             'Gold 18K/750': 0,
             'Silver': 0
         },
-        'gold_wastage_percentage': 13,
-        'silver_wastage_percentage': 13,
+        'gold_wastage_percentage': 0,
+        'silver_wastage_percentage': 0,
         'gold_mc_per_gm': 0,
         'silver_mc_per_gm': 0
     }
@@ -211,13 +211,25 @@ with st.sidebar:
     # Update metal rates
     for metal_type in st.session_state.base_values['metal_rates'].keys():
         # Use a unique key for each input to ensure proper state management
-        st.session_state.base_values['metal_rates'][metal_type] = st.number_input(
+        current_value = st.session_state.base_values['metal_rates'][metal_type]
+        # Convert to float for display, use None if value is 0
+        display_value = None if current_value == 0 else (float(current_value) if current_value != 0 else None)
+        
+        input_value = st.number_input(
             f"{metal_type} Rate", 
-            min_value=0, 
-            value=st.session_state.base_values['metal_rates'][metal_type],
-            step=10,
+            min_value=0.0, 
+            value=display_value,
+            step=1.0,
+            format="%.3f",
+            placeholder="0.000",
             key=f"rate_{metal_type}"
         )
+        # Update session state only if input is not None
+        if input_value is not None:
+            st.session_state.base_values['metal_rates'][metal_type] = int(input_value) if input_value == int(input_value) else input_value
+        elif current_value != 0:
+            # If user cleared the field, reset to 0
+            st.session_state.base_values['metal_rates'][metal_type] = 0
 
     st.markdown("---")
     st.subheader("Wastage Settings")
@@ -268,8 +280,8 @@ with st.sidebar:
                 'Gold 18K/750': 0,
                 'Silver': 0
             },
-            'gold_wastage_percentage': 13,
-            'silver_wastage_percentage': 13,
+            'gold_wastage_percentage': 0,
+            'silver_wastage_percentage': 0,
             'gold_mc_per_gm': 0,
             'silver_mc_per_gm': 0
         }
@@ -288,8 +300,8 @@ with col_reset:
                 'Gold 18K/750': 0,
                 'Silver': 0
             },
-            'gold_wastage_percentage': 13,
-            'silver_wastage_percentage': 13,
+            'gold_wastage_percentage': 0,
+            'silver_wastage_percentage': 0,
             'gold_mc_per_gm': 0,
             'silver_mc_per_gm': 0
         }
@@ -523,3 +535,6 @@ st.download_button(
     type="primary",
     use_container_width=True
 )
+
+# Display info message about download location
+st.info("💡 Click the button above to download the PDF to your default download folder")
