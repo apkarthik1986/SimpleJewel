@@ -77,6 +77,10 @@ if 'base_values' not in st.session_state:
 if 'customer_details_expanded' not in st.session_state:
     st.session_state.customer_details_expanded = False
 
+# Initialize reset counter to force widget recreation when reset is clicked
+if 'reset_counter' not in st.session_state:
+    st.session_state.reset_counter = 0
+
 # Function to generate PDF for thermal printer
 def generate_thermal_pdf(data):
     """Generate a PDF formatted for thermal printer (80mm width) with dynamic height"""
@@ -265,7 +269,7 @@ with st.sidebar:
             step=1.0,
             format="%.3f",
             placeholder="0.000",
-            key=f"rate_{metal_type}"
+            key=f"rate_{metal_type}_{st.session_state.reset_counter}"
         )
         # Update session state only if input is not None
         if input_value is not None:
@@ -288,7 +292,7 @@ with st.sidebar:
         value=None if st.session_state.base_values['gold_wastage_percentage'] == 0 else float(st.session_state.base_values['gold_wastage_percentage']),
         step=0.5,
         placeholder="0.0",
-        key="gold_wastage_percentage"
+        key=f"gold_wastage_percentage_{st.session_state.reset_counter}"
     )
     if gold_wastage_input is not None:
         if st.session_state.base_values['gold_wastage_percentage'] != gold_wastage_input:
@@ -302,7 +306,7 @@ with st.sidebar:
         value=None if st.session_state.base_values['silver_wastage_percentage'] == 0 else float(st.session_state.base_values['silver_wastage_percentage']),
         step=0.5,
         placeholder="0.0",
-        key="silver_wastage_percentage"
+        key=f"silver_wastage_percentage_{st.session_state.reset_counter}"
     )
     if silver_wastage_input is not None:
         if st.session_state.base_values['silver_wastage_percentage'] != silver_wastage_input:
@@ -318,7 +322,7 @@ with st.sidebar:
         value=None if st.session_state.base_values['gold_mc_per_gm'] == 0 else st.session_state.base_values['gold_mc_per_gm'],
         step=5,
         placeholder="0",
-        key="gold_mc_per_gm"
+        key=f"gold_mc_per_gm_{st.session_state.reset_counter}"
     )
     if gold_mc_input is not None:
         if st.session_state.base_values['gold_mc_per_gm'] != gold_mc_input:
@@ -331,7 +335,7 @@ with st.sidebar:
         value=None if st.session_state.base_values['silver_mc_per_gm'] == 0 else st.session_state.base_values['silver_mc_per_gm'],
         step=5,
         placeholder="0",
-        key="silver_mc_per_gm"
+        key=f"silver_mc_per_gm_{st.session_state.reset_counter}"
     )
     if silver_mc_input is not None:
         if st.session_state.base_values['silver_mc_per_gm'] != silver_mc_input:
@@ -354,6 +358,7 @@ with st.sidebar:
             'last_date': get_current_date_ist()
         }
         save_base_values(st.session_state.base_values)
+        st.session_state.reset_counter += 1
         st.rerun()
 
 # Main App
@@ -376,6 +381,7 @@ with col_reset:
             'last_date': get_current_date_ist()
         }
         save_base_values(st.session_state.base_values)
+        st.session_state.reset_counter += 1
         st.rerun()
 
 # Display time in IST
