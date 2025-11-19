@@ -11,7 +11,7 @@ A simple and intuitive jewellery invoicing application built with Streamlit. Cal
 - **Configurable Base Values**: Easily adjust gold/silver rates, wastage percentages, and making charges
 - **Customer Information**: Capture bill number, customer details, and contact information
 - **PDF Invoice Generation**: Dynamic-sized PDF invoices optimized for thermal printers with download confirmation
-- **Session Persistence**: Configuration values persist during your browser session
+- **Daily Persistence**: Base values (rates, wastage, making charges) persist throughout the day and automatically reset to zero at midnight IST
 - **Clean Interface**: Simple, user-friendly design focused on essential features with no placeholder zeros
 
 ## 📋 Prerequisites
@@ -133,6 +133,17 @@ SimpleJewel/
 └── README.md          # This file
 ```
 
+## 💾 Data Persistence
+
+The application automatically saves your base values (metal rates, wastage percentages, and making charges) to a local file on your computer at `~/.simplejewel_base_values.json`. This ensures that:
+
+- **Your settings persist** across browser refreshes and app restarts
+- **Values are maintained** throughout the entire day
+- **Automatic reset** occurs at midnight IST (India Standard Time)
+- **No manual intervention** needed - the app handles everything automatically
+
+The automatic reset to zero at the end of each day ensures you start fresh each morning with default values, ready to configure for the current day's market rates.
+
 ## 🔧 Configuration
 
 Default values in the application:
@@ -146,7 +157,7 @@ Default values in the application:
 - Silver Making Charges: ₹0/gram (to be configured manually)
 - GST: 3% (1.5% CGST + 1.5% SGST)
 
-All values can be adjusted via the sidebar during runtime. Session state is maintained during your browser session but will reset to defaults on page refresh.
+All values can be adjusted via the sidebar during runtime. Base values are automatically saved to a local file (`~/.simplejewel_base_values.json`) and persist throughout the day. At midnight IST, all values automatically reset to zero (0) for the new day.
 
 ## 🤝 Contributing
 

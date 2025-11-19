@@ -7,6 +7,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 import os
 import base64
+import json
 
 # Page configuration
 st.set_page_config(
@@ -15,9 +16,19 @@ st.set_page_config(
     layout="centered"
 )
 
-# Initialize session state for base values
-if 'base_values' not in st.session_state:
-    st.session_state.base_values = {
+# File path for storing base values
+BASE_VALUES_FILE = os.path.expanduser("~/.simplejewel_base_values.json")
+
+# Function to get current date in IST
+def get_current_date_ist():
+    """Get the current date in IST timezone"""
+    ist = pytz.timezone('Asia/Kolkata')
+    return datetime.now(ist).date().isoformat()
+
+# Function to load base values from file
+def load_base_values():
+    """Load base values from file, reset if date has changed"""
+    default_values = {
         'metal_rates': {
             'Gold 22K/916': 0,
             'Gold 20K/833': 0,
@@ -27,8 +38,40 @@ if 'base_values' not in st.session_state:
         'gold_wastage_percentage': 0,
         'silver_wastage_percentage': 0,
         'gold_mc_per_gm': 0,
-        'silver_mc_per_gm': 0
+        'silver_mc_per_gm': 0,
+        'last_date': get_current_date_ist()
     }
+    
+    if os.path.exists(BASE_VALUES_FILE):
+        try:
+            with open(BASE_VALUES_FILE, 'r') as f:
+                data = json.load(f)
+                
+            # Check if date has changed (new day)
+            if data.get('last_date') != get_current_date_ist():
+                # Reset to defaults if it's a new day
+                return default_values
+            
+            return data
+        except (json.JSONDecodeError, IOError):
+            return default_values
+    
+    return default_values
+
+# Function to save base values to file
+def save_base_values(values):
+    """Save base values to file with current date"""
+    values['last_date'] = get_current_date_ist()
+    try:
+        with open(BASE_VALUES_FILE, 'w') as f:
+            json.dump(values, f, indent=2)
+    except IOError:
+        # Silently fail if we can't write the file
+        pass
+
+# Initialize session state for base values
+if 'base_values' not in st.session_state:
+    st.session_state.base_values = load_base_values()
 
 # Initialize customer details expand state
 if 'customer_details_expanded' not in st.session_state:
@@ -226,10 +269,14 @@ with st.sidebar:
         )
         # Update session state only if input is not None
         if input_value is not None:
-            st.session_state.base_values['metal_rates'][metal_type] = int(input_value) if input_value == int(input_value) else input_value
+            new_value = int(input_value) if input_value == int(input_value) else input_value
+            if st.session_state.base_values['metal_rates'][metal_type] != new_value:
+                st.session_state.base_values['metal_rates'][metal_type] = new_value
+                save_base_values(st.session_state.base_values)
         elif current_value != 0:
             # If user cleared the field, reset to 0
             st.session_state.base_values['metal_rates'][metal_type] = 0
+            save_base_values(st.session_state.base_values)
 
     st.markdown("---")
     st.subheader("Wastage Settings")
@@ -244,7 +291,9 @@ with st.sidebar:
         key="gold_wastage_percentage"
     )
     if gold_wastage_input is not None:
-        st.session_state.base_values['gold_wastage_percentage'] = gold_wastage_input
+        if st.session_state.base_values['gold_wastage_percentage'] != gold_wastage_input:
+            st.session_state.base_values['gold_wastage_percentage'] = gold_wastage_input
+            save_base_values(st.session_state.base_values)
 
     silver_wastage_input = st.number_input(
         "Silver Wastage (%)", 
@@ -256,7 +305,9 @@ with st.sidebar:
         key="silver_wastage_percentage"
     )
     if silver_wastage_input is not None:
-        st.session_state.base_values['silver_wastage_percentage'] = silver_wastage_input
+        if st.session_state.base_values['silver_wastage_percentage'] != silver_wastage_input:
+            st.session_state.base_values['silver_wastage_percentage'] = silver_wastage_input
+            save_base_values(st.session_state.base_values)
 
     st.markdown("---")
     st.subheader("Making Charges")
@@ -270,7 +321,9 @@ with st.sidebar:
         key="gold_mc_per_gm"
     )
     if gold_mc_input is not None:
-        st.session_state.base_values['gold_mc_per_gm'] = gold_mc_input
+        if st.session_state.base_values['gold_mc_per_gm'] != gold_mc_input:
+            st.session_state.base_values['gold_mc_per_gm'] = gold_mc_input
+            save_base_values(st.session_state.base_values)
 
     silver_mc_input = st.number_input(
         "Silver MC (₹ per gram)", 
@@ -281,7 +334,9 @@ with st.sidebar:
         key="silver_mc_per_gm"
     )
     if silver_mc_input is not None:
-        st.session_state.base_values['silver_mc_per_gm'] = silver_mc_input
+        if st.session_state.base_values['silver_mc_per_gm'] != silver_mc_input:
+            st.session_state.base_values['silver_mc_per_gm'] = silver_mc_input
+            save_base_values(st.session_state.base_values)
 
     st.markdown("---")
     if st.button("🔄 Reset to Defaults"):
@@ -295,8 +350,10 @@ with st.sidebar:
             'gold_wastage_percentage': 0,
             'silver_wastage_percentage': 0,
             'gold_mc_per_gm': 0,
-            'silver_mc_per_gm': 0
+            'silver_mc_per_gm': 0,
+            'last_date': get_current_date_ist()
         }
+        save_base_values(st.session_state.base_values)
         st.rerun()
 
 # Main App
@@ -315,8 +372,10 @@ with col_reset:
             'gold_wastage_percentage': 0,
             'silver_wastage_percentage': 0,
             'gold_mc_per_gm': 0,
-            'silver_mc_per_gm': 0
+            'silver_mc_per_gm': 0,
+            'last_date': get_current_date_ist()
         }
+        save_base_values(st.session_state.base_values)
         st.rerun()
 
 # Display time in IST
