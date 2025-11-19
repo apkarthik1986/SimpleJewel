@@ -152,7 +152,7 @@ def generate_thermal_pdf(data):
     
     c.setFont("Helvetica", 10)
     c.drawString(5 * mm, y, f"J Amount:")
-    c.drawRightString(width - 5 * mm, y, f"Rs.{data['j_amount']:.2f}")
+    c.drawRightString(width - 5 * mm, y, f"Rs.{round(data['j_amount'])}")
     y -= 4 * mm
     
     c.drawString(5 * mm, y, f"Making Charges:")
@@ -161,7 +161,7 @@ def generate_thermal_pdf(data):
     
     c.setFont("Helvetica-Bold", 10)
     c.drawString(5 * mm, y, f"Amount:")
-    c.drawRightString(width - 5 * mm, y, f"Rs.{data['amount_before_gst']:.2f}")
+    c.drawRightString(width - 5 * mm, y, f"Rs.{round(data['amount_before_gst'])}")
     y -= 5 * mm
     
     # Add discount if exists
@@ -456,10 +456,10 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.metric("J Amount (₹)", f"{j_amount:.2f}")
+    st.metric("J Amount (₹)", f"{round(j_amount):,}")
 
 with col2:
-    st.metric("Amount (₹)", f"{amount_before_gst:.2f}")
+    st.metric("Amount (₹)", f"{round(amount_before_gst):,}")
 
 # Discount Section
 st.markdown("---")
