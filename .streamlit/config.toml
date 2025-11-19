@@ -1,3 +1,7 @@
 [client]
 # Hide the GitHub and fork icons in the header
 toolbarMode = "minimal"
+
+[browser]
+# Disable gathering usage stats which may show GitHub links
+gatherUsageStats = false

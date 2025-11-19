@@ -234,42 +234,54 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("Wastage Settings")
 
-    st.session_state.base_values['gold_wastage_percentage'] = st.number_input(
+    gold_wastage_input = st.number_input(
         "Gold Wastage (%)", 
         min_value=0.0, 
         max_value=100.0,
-        value=float(st.session_state.base_values['gold_wastage_percentage']),
+        value=None if st.session_state.base_values['gold_wastage_percentage'] == 0 else float(st.session_state.base_values['gold_wastage_percentage']),
         step=0.5,
+        placeholder="0.0",
         key="gold_wastage_percentage"
     )
+    if gold_wastage_input is not None:
+        st.session_state.base_values['gold_wastage_percentage'] = gold_wastage_input
 
-    st.session_state.base_values['silver_wastage_percentage'] = st.number_input(
+    silver_wastage_input = st.number_input(
         "Silver Wastage (%)", 
         min_value=0.0, 
         max_value=100.0,
-        value=float(st.session_state.base_values['silver_wastage_percentage']),
+        value=None if st.session_state.base_values['silver_wastage_percentage'] == 0 else float(st.session_state.base_values['silver_wastage_percentage']),
         step=0.5,
+        placeholder="0.0",
         key="silver_wastage_percentage"
     )
+    if silver_wastage_input is not None:
+        st.session_state.base_values['silver_wastage_percentage'] = silver_wastage_input
 
     st.markdown("---")
     st.subheader("Making Charges")
 
-    st.session_state.base_values['gold_mc_per_gm'] = st.number_input(
+    gold_mc_input = st.number_input(
         "Gold MC (₹ per gram)", 
         min_value=0, 
-        value=st.session_state.base_values['gold_mc_per_gm'],
+        value=None if st.session_state.base_values['gold_mc_per_gm'] == 0 else st.session_state.base_values['gold_mc_per_gm'],
         step=5,
+        placeholder="0",
         key="gold_mc_per_gm"
     )
+    if gold_mc_input is not None:
+        st.session_state.base_values['gold_mc_per_gm'] = gold_mc_input
 
-    st.session_state.base_values['silver_mc_per_gm'] = st.number_input(
+    silver_mc_input = st.number_input(
         "Silver MC (₹ per gram)", 
         min_value=0, 
-        value=st.session_state.base_values['silver_mc_per_gm'],
+        value=None if st.session_state.base_values['silver_mc_per_gm'] == 0 else st.session_state.base_values['silver_mc_per_gm'],
         step=5,
+        placeholder="0",
         key="silver_mc_per_gm"
     )
+    if silver_mc_input is not None:
+        st.session_state.base_values['silver_mc_per_gm'] = silver_mc_input
 
     st.markdown("---")
     if st.button("🔄 Reset to Defaults"):
@@ -412,19 +424,25 @@ if mc_type == "Rupees (₹)":
     making_charges = st.number_input(
         f"Making Charges (₹) [Auto: {calculated_mc:.2f}, Min: {min_making_charge:.0f}]",
         min_value=min_making_charge,
-        value=default_mc,
+        value=default_mc if net_weight_gm > 0 else None,
         step=10.0,
-        format="%.2f"
+        format="%.2f",
+        placeholder=f"{min_making_charge:.0f}"
     )
+    if making_charges is None:
+        making_charges = min_making_charge
 else:
     mc_percentage = st.number_input(
         "Making Charge Percentage (%)",
         min_value=0.0,
         max_value=100.0,
-        value=10.0,
+        value=None,
         step=0.5,
-        format="%.2f"
+        format="%.2f",
+        placeholder="0.0"
     )
+    if mc_percentage is None:
+        mc_percentage = 0.0
     calculated_mc = j_amount * (mc_percentage / 100)
     # Apply minimum making charge
     making_charges = max(calculated_mc, min_making_charge)
@@ -454,23 +472,27 @@ discount_type = st.radio(
 
 discount_amount = 0.0
 if discount_type == "Rupees (₹)":
-    discount_amount = st.number_input(
+    discount_input = st.number_input(
         "Discount Amount (₹)",
         min_value=0.0,
         max_value=float(amount_before_gst),
-        value=0.0,
+        value=None,
         step=10.0,
-        format="%.2f"
+        format="%.2f",
+        placeholder="0.00"
     )
+    discount_amount = discount_input if discount_input is not None else 0.0
 elif discount_type == "Percentage (%)":
-    discount_percentage = st.number_input(
+    discount_percentage_input = st.number_input(
         "Discount Percentage (%)",
         min_value=0.0,
         max_value=100.0,
-        value=0.0,
+        value=None,
         step=0.5,
-        format="%.2f"
+        format="%.2f",
+        placeholder="0.00"
     )
+    discount_percentage = discount_percentage_input if discount_percentage_input is not None else 0.0
     discount_amount = amount_before_gst * (discount_percentage / 100)
     st.info(f"Discount Amount: ₹{discount_amount:.2f}")
 
@@ -527,14 +549,15 @@ with open(pdf_file, "rb") as f:
     pdf_data = f.read()
 
 # Display download button directly
-st.download_button(
+if st.download_button(
     label="📄 Download PDF",
     data=pdf_data,
     file_name=f"jewel_invoice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
     mime="application/pdf",
     type="primary",
     use_container_width=True
-)
+):
+    st.success("✅ PDF has been saved to your default download folder!")
 
 # Display info message about download location
 st.info("💡 Click the button above to download the PDF to your default download folder")
