@@ -549,15 +549,14 @@ with open(pdf_file, "rb") as f:
     pdf_data = f.read()
 
 # Display download button directly
-if st.download_button(
+st.download_button(
     label="📄 Download PDF",
     data=pdf_data,
     file_name=f"jewel_invoice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
     mime="application/pdf",
     type="primary",
     use_container_width=True
-):
-    st.success("✅ PDF has been saved to your default download folder!")
+)
 
-# Display info message about download location
-st.info("💡 Click the button above to download the PDF to your default download folder")
+# Display success message about download location
+st.success("✅ When you click the Download PDF button above, the file will be saved to your default download folder")
