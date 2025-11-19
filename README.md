@@ -10,9 +10,9 @@ A simple and intuitive jewellery invoicing application built with Streamlit. Cal
 - **Discount Options**: Apply discounts in rupees or percentage
 - **Configurable Base Values**: Easily adjust gold/silver rates, wastage percentages, and making charges
 - **Customer Information**: Capture bill number, customer details, and contact information
-- **PDF Invoice Generation**: Dynamic-sized PDF invoices optimized for thermal printers
+- **PDF Invoice Generation**: Dynamic-sized PDF invoices optimized for thermal printers with download confirmation
 - **Session Persistence**: Configuration values persist during your browser session
-- **Clean Interface**: Simple, user-friendly design focused on essential features
+- **Clean Interface**: Simple, user-friendly design focused on essential features with no placeholder zeros
 
 ## 📋 Prerequisites
 
@@ -46,13 +46,15 @@ The application will open in your default web browser at `http://localhost:8501`
 
 ### Configure Base Values (Sidebar)
 
-1. **Set Gold Rates**: Manually adjust rates for different gold purities (22K, 20K, 18K)
-2. **Set Silver Rate**: Configure silver price per gram
-3. **Set Gold Wastage**: Define wastage percentage for gold (default 13%)
-4. **Set Silver Wastage**: Define wastage percentage for silver (default 13%)
-5. **Set Gold MC**: Define Gold making charges per gram
-6. **Set Silver MC**: Define Silver making charges per gram (separate from Gold MC)
+1. **Set Gold Rates**: Manually adjust rates for different gold purities (22K, 20K, 18K) - Input fields are empty by default for easy data entry
+2. **Set Silver Rate**: Configure silver price per gram - Input field is empty by default for easy data entry
+3. **Set Gold Wastage**: Define wastage percentage for gold (no default, start typing directly)
+4. **Set Silver Wastage**: Define wastage percentage for silver (no default, start typing directly)
+5. **Set Gold MC**: Define Gold making charges per gram - Input field is empty by default for easy data entry
+6. **Set Silver MC**: Define Silver making charges per gram (separate from Gold MC) - Input field is empty by default for easy data entry
 7. **Reset**: Use "Reset to Defaults" button in sidebar or "Reset All" button on main page to restore default values (all rates to 0)
+
+**Note**: All input fields allow direct typing without needing to delete placeholder zeros, making data entry faster and more intuitive.
 
 ### Create an Estimate
 
@@ -78,8 +80,9 @@ The application will open in your default web browser at `http://localhost:8501`
 
 #### Step 4: Download Invoice
 - Click "Download PDF" button to generate invoice
-- PDF opens in new tab optimized for thermal printer
-- Print directly to thermal printer from browser
+- A success message will confirm the PDF has been saved to your default download folder
+- PDF is optimized for thermal printer
+- Print directly to thermal printer from your download folder
 
 ## 🎯 Calculation Formula
 
