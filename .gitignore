@@ -24,7 +24,7 @@ wheels/
 *.egg
 
 # Streamlit
-.streamlit/
+# .streamlit/ - Commented out to include config for hiding GitHub logo
 
 # IDE
 .vscode/
