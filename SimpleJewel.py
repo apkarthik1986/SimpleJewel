@@ -466,7 +466,8 @@ with col2:
     # Auto-fill wastage with suggested value when weight is provided
     # This ensures real-time updates as soon as weight, metal type, or wastage percentage changes
     # Use suggested_wastage directly to auto-fill the field
-    # Include weight_gm, selected_type, and wastage_percentage in the key to force widget recreation
+    # Include weight_gm, selected_type in the key to force widget recreation when those change
+    # DO NOT include wastage_percentage in key - this preserves user's manual input when base wastage changes
     wastage_gm = st.number_input(
         "Wastage (gm)", 
         min_value=0.0, 
@@ -475,7 +476,7 @@ with col2:
         format="%.3f",
         placeholder="0.000",
         help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)" if weight_gm > 0 else "Enter weight first",
-        key=f"wastage_gm_{st.session_state.app_input_reset_counter}_{weight_gm}_{selected_type}_{wastage_percentage}"
+        key=f"wastage_gm_{st.session_state.app_input_reset_counter}_{weight_gm}_{selected_type}"
     )
     if wastage_gm is None:
         wastage_gm = 0.0
