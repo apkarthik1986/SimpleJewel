@@ -441,15 +441,16 @@ with col2:
     # Auto-fill wastage with suggested value when weight is provided
     # This ensures real-time updates as soon as weight changes
     # Use suggested_wastage directly to auto-fill the field
+    # Include weight_gm in the key to force widget recreation when weight changes
     wastage_gm = st.number_input(
         "Wastage (gm)", 
         min_value=0.0, 
-        value=suggested_wastage,
+        value=suggested_wastage if weight_gm > 0 else None,
         step=0.1,
         format="%.3f",
         placeholder="0.000",
         help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)" if weight_gm > 0 else "Enter weight first",
-        key=f"wastage_gm_{st.session_state.app_input_reset_counter}"
+        key=f"wastage_gm_{st.session_state.app_input_reset_counter}_{weight_gm}"
     )
     if wastage_gm is None:
         wastage_gm = 0.0
@@ -493,6 +494,7 @@ if mc_type == "Rupees (₹)":
     else:
         active_value = "Min"
     
+    # Include weight_gm in the key to force widget recreation when weight changes
     making_charges = st.number_input(
         f"Making Charges (₹) [Auto: {calculated_mc:.2f}, Min: {min_making_charge:.0f}, Using: {active_value}]",
         min_value=min_making_charge,
@@ -500,7 +502,7 @@ if mc_type == "Rupees (₹)":
         step=10.0,
         format="%.2f",
         placeholder=f"{min_making_charge:.0f}",
-        key=f"making_charges_rupees_{st.session_state.app_input_reset_counter}"
+        key=f"making_charges_rupees_{st.session_state.app_input_reset_counter}_{weight_gm}"
     )
     if making_charges is None:
         making_charges = min_making_charge
