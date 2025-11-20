@@ -438,14 +438,17 @@ with col2:
     wastage_percentage = st.session_state.base_values['gold_wastage_percentage'] if is_gold else st.session_state.base_values['silver_wastage_percentage']
     suggested_wastage = (weight_gm * wastage_percentage) / 100 if weight_gm > 0 else 0.0
     
+    # Auto-fill wastage with suggested value when weight is provided
+    # This ensures real-time updates as soon as weight changes
+    # Use suggested_wastage directly to auto-fill the field
     wastage_gm = st.number_input(
         "Wastage (gm)", 
         min_value=0.0, 
-        value=suggested_wastage if weight_gm > 0 else None,
+        value=suggested_wastage,
         step=0.1,
         format="%.3f",
         placeholder="0.000",
-        help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)",
+        help=f"Suggested: {suggested_wastage:.3f} gm ({wastage_percentage}%)" if weight_gm > 0 else "Enter weight first",
         key=f"wastage_gm_{st.session_state.app_input_reset_counter}"
     )
     if wastage_gm is None:
