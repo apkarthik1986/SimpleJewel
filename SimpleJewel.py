@@ -407,11 +407,30 @@ st.markdown("---")
 st.header("Item Calculation")
 
 # Type Selection - Using metal rates
+# Type Selection - explicitly manage widget state to prevent reset during sidebar reruns
+widget_key = f"selected_type_{st.session_state.app_input_reset_counter}"
+metal_options = list(st.session_state.base_values['metal_rates'].keys())
+
+# Initialize to first option only if never set before
+if widget_key not in st.session_state:
+    st.session_state[widget_key] = metal_options[0]
+
+# Get current selection from session state
+current_selection = st.session_state[widget_key]
+
+# Determine index based on current selection
+try:
+    current_index = metal_options.index(current_selection)
+except ValueError:
+    # If current selection is no longer in options, default to first
+    current_index = 0
+    st.session_state[widget_key] = metal_options[0]
+
 selected_type = st.selectbox(
     "Type",
-    options=list(st.session_state.base_values['metal_rates'].keys()),
-    index=0,
-    key=f"selected_type_{st.session_state.app_input_reset_counter}"
+    options=metal_options,
+    index=current_index,
+    key=widget_key
 )
 
 # Get rate per gram based on selection
