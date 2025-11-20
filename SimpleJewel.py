@@ -281,10 +281,12 @@ with st.sidebar:
             if st.session_state.base_values['metal_rates'][metal_type] != new_value:
                 st.session_state.base_values['metal_rates'][metal_type] = new_value
                 save_base_values(st.session_state.base_values)
+                st.rerun()
         elif current_value != 0:
             # If user cleared the field, reset to 0
             st.session_state.base_values['metal_rates'][metal_type] = 0
             save_base_values(st.session_state.base_values)
+            st.rerun()
 
     st.markdown("---")
     st.subheader("Wastage Settings")
@@ -302,6 +304,7 @@ with st.sidebar:
         if st.session_state.base_values['gold_wastage_percentage'] != gold_wastage_input:
             st.session_state.base_values['gold_wastage_percentage'] = gold_wastage_input
             save_base_values(st.session_state.base_values)
+            st.rerun()
 
     silver_wastage_input = st.number_input(
         "Silver Wastage (%)", 
@@ -316,6 +319,7 @@ with st.sidebar:
         if st.session_state.base_values['silver_wastage_percentage'] != silver_wastage_input:
             st.session_state.base_values['silver_wastage_percentage'] = silver_wastage_input
             save_base_values(st.session_state.base_values)
+            st.rerun()
 
     st.markdown("---")
     st.subheader("Making Charges")
@@ -332,6 +336,7 @@ with st.sidebar:
         if st.session_state.base_values['gold_mc_per_gm'] != gold_mc_input:
             st.session_state.base_values['gold_mc_per_gm'] = gold_mc_input
             save_base_values(st.session_state.base_values)
+            st.rerun()
 
     silver_mc_input = st.number_input(
         "Silver MC (₹ per gram)", 
@@ -345,6 +350,7 @@ with st.sidebar:
         if st.session_state.base_values['silver_mc_per_gm'] != silver_mc_input:
             st.session_state.base_values['silver_mc_per_gm'] = silver_mc_input
             save_base_values(st.session_state.base_values)
+            st.rerun()
 
     st.markdown("---")
     if st.button("🔄 Reset to Defaults"):

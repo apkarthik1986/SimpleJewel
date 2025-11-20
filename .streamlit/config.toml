@@ -5,3 +5,9 @@ toolbarMode = "minimal"
 [browser]
 # Disable gathering usage stats which may show GitHub links
 gatherUsageStats = false
+
+[server]
+# Enable automatic rerun when source files are modified
+runOnSave = true
+# Enable file watcher to detect changes
+fileWatcherType = "auto"
