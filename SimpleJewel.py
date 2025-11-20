@@ -431,6 +431,8 @@ with col1:
 
 with col2:
     # Calculate wastage based on wastage percentage if weight is provided
+    # Formula: wastage_weight = weight * wastage_percentage / 100
+    # Example: weight=10gm, wastage=10% => wastage_weight = 10 * 10 / 100 = 1gm
     # Determine wastage percentage based on metal type
     is_gold = 'Gold' in selected_type
     wastage_percentage = st.session_state.base_values['gold_wastage_percentage'] if is_gold else st.session_state.base_values['silver_wastage_percentage']
@@ -479,11 +481,17 @@ min_making_charge = 250.0 if is_gold else (200.0 if is_silver else 0.0)
 
 if mc_type == "Rupees (₹)":
     calculated_mc = mc_per_gram * weight_gm
-    # Apply minimum making charge
+    # Apply minimum making charge - take the highest of Auto or Min
     default_mc = max(calculated_mc, min_making_charge)
     
+    # Determine which value is being used
+    if calculated_mc >= min_making_charge:
+        active_value = "Auto"
+    else:
+        active_value = "Min"
+    
     making_charges = st.number_input(
-        f"Making Charges (₹) [Auto: {calculated_mc:.2f}, Min: {min_making_charge:.0f}]",
+        f"Making Charges (₹) [Auto: {calculated_mc:.2f}, Min: {min_making_charge:.0f}, Using: {active_value}]",
         min_value=min_making_charge,
         value=default_mc if weight_gm > 0 else None,
         step=10.0,
@@ -507,9 +515,16 @@ else:
     if mc_percentage is None:
         mc_percentage = 0.0
     calculated_mc = j_amount * (mc_percentage / 100)
-    # Apply minimum making charge
+    # Apply minimum making charge - take the highest of Auto or Min
     making_charges = max(calculated_mc, min_making_charge)
-    st.info(f"Making Charges: ₹{making_charges:.2f} (Min: ₹{min_making_charge:.0f})")
+    
+    # Determine which value is being used
+    if calculated_mc >= min_making_charge:
+        active_value = "Auto"
+    else:
+        active_value = "Min"
+    
+    st.info(f"Making Charges: ₹{making_charges:.2f} (Auto: ₹{calculated_mc:.2f}, Min: ₹{min_making_charge:.0f}, Using: {active_value})")
 
 # Base amount before GST
 amount_before_gst = j_amount + making_charges
