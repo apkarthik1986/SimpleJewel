@@ -478,14 +478,14 @@ mc_per_gram = st.session_state.base_values['gold_mc_per_gm'] if is_gold else st.
 min_making_charge = 250.0 if is_gold else (200.0 if is_silver else 0.0)
 
 if mc_type == "Rupees (₹)":
-    calculated_mc = mc_per_gram * net_weight_gm
+    calculated_mc = mc_per_gram * weight_gm
     # Apply minimum making charge
     default_mc = max(calculated_mc, min_making_charge)
     
     making_charges = st.number_input(
         f"Making Charges (₹) [Auto: {calculated_mc:.2f}, Min: {min_making_charge:.0f}]",
         min_value=min_making_charge,
-        value=default_mc if net_weight_gm > 0 else None,
+        value=default_mc if weight_gm > 0 else None,
         step=10.0,
         format="%.2f",
         placeholder=f"{min_making_charge:.0f}",
